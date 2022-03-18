@@ -1,0 +1,57 @@
+
+*** 接口说明：
+语音对应接口:
+   ledread =P2^4
+   dianjiread =P2^5
+      
+
+DHT11: 
+  DATA=P1^7
+
+DS1302: 
+sbit DSIO=P3^4;
+sbit RST=P3^5;
+sbit SCLK=P3^6;
+
+按键:
+sbit KEY1 = P2^0;
+sbit KEY2 = P2^1;
+sbit KEY3 = P2^2;
+sbit KEY4 = P2^3;
+
+LCD1602:
+  * DB0--P0^0
+  * DB1--P0^1
+  * DB2--P0^2
+  * DB3--P0^3
+  * DB4--P0^4
+  * DB5--P0^5
+  * DB6--P0^6
+  * DB7--P0^7
+  * LCD1602_RS = P1^3;
+  * LCD1602_RW = P1^4;
+  * LCD1602_E  = P1^5;
+  
+电机驱动模块:
+   * IN1--P3^3
+   * IN2--P3^4
+   * INA--P3^2
+
+烟雾传感器:   
+   * smoke--P1^6;
+    
+Beep LED:
+   * beep--P1^2
+   * LED =  P1^1;
+
+GSM模块:
+   *TXD=P3^0
+   *TXD=P3^1
+
+
+
+
+
+
+
+

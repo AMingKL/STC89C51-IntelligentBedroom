@@ -1,0 +1,344 @@
+C51 COMPILER V9.60.0.0   MAIN                                                              03/12/2022 21:15:51 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keil 5\anzhuangdizhi\C51\BIN\C51.EXE users\main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\users) DEBUG
+                    - OBJECTEXTEND PRINT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          /**
+   2            ********************************************************************************************************
+             -*****************
+   3            * @file    main.c
+   4            * @author  AMKL
+   5            * @version V1.0
+   6            * @date    2022-03-12
+   7            * @brief   基于51单片机-智能寝室系统
+   8            ********************************************************************************************************
+             -*****************
+   9            * @attention
+  10            *
+  11            * 使用前阅读readme.txt文件！
+  12            *设定上电时间为7:59:50，闹钟设置为08:00:00
+  13            *KEYI--界面切换，第一次按下到闹钟时间设置界面，第二次回到时间显示界面，往复循环
+  14            *KEY2--闹钟时间单位切换，初始为小时调整，第一次按下为分钟调整，第二次按下为秒钟调整，往复循环
+  15            *KEY3--闹钟时间为选中时间单位数加一,往复循环
+  16            *KEY2--闹钟时间为选中时间单位数减一,往复循环
+  17            * 
+  18          **********************************************************************************************************
+             -***************
+  19            */
+  20          
+  21          /* Includes ----------------------------------------------------------------------------------------------
+             ----------------*/
+  22          #include "reg52.h"
+  23          #include "ds1302.h"
+  24          #include "lcd.h"
+  25          #include "pwm.h"
+  26          #include "key.h"
+  27          #include "Delay.h"
+  28          #include "dht11.h"
+  29          #include "usart.h"
+  30          #include "ledbeep.h"
+  31          #include "intrins.h"
+  32          /* IO定义 ------------------------------------------------------------------------------------------------
+             ------------------*/
+  33          sbit SmokeOUT=P1^6;//烟雾传感器数据引脚
+  34          sbit LedRead=P2^4;//语音输出控制led引脚
+  35          sbit MotorReadLeft=P2^5;//语音输出控制电机正转引脚
+  36          sbit MotorReadRight=P2^6;//语音输出控制电机反转引脚
+  37          /* 函数申明 ----------------------------------------------------------------------------------------------
+             --------------------*/
+  38          void key_Proc(void);
+  39          void lcd1602_Proc(void);
+  40          void motor_Proc(void);
+  41          void dht11_proc(void);
+  42          void VoiceWake_Proc(void);
+  43          void ds1302_proc(void);
+  44          void led_beep_proc(void);
+  45          void Alarm_proc(void);
+  46          void SystemPara_Init();
+  47          /* 变量定义 ----------------------------------------------------------------------------------------------
+             --------------------*/
+C51 COMPILER V9.60.0.0   MAIN                                                              03/12/2022 21:15:51 PAGE 2   
+
+  48          typedef struct
+  49          {
+  50            unsigned char hour;//小时
+  51            unsigned char min;//分钟
+  52            unsigned char sec;//秒钟
+  53            
+  54            unsigned char alarm_hour;//闹钟小时
+  55            unsigned char alarm_min;//闹钟分钟
+  56            unsigned char alarm_sec;//闹钟秒钟
+  57          }TIME_InitTypeDef;
+  58          
+  59          TIME_InitTypeDef DS1302;
+  60          
+  61          typedef struct
+  62          {
+  63            unsigned char interface;//lcd1602界面
+  64            unsigned char choose;////闹钟调整时间切换变量
+  65          }SYSTEM_InitTypeDef;
+  66          
+  67          SYSTEM_InitTypeDef SYSTEM;
+  68          
+  69          unsigned char flag_send=0;//发送短信标志位
+  70          
+  71          #define MAIN 0  //主界面
+  72          #define SET  1  //设置界面
+  73          
+  74          /**
+  75           * @brief  主函数
+  76           * @param  无
+  77           * @retval 无
+  78           */
+  79          int main(void)
+  80          {
+  81   1        T0Init(10);//10ms定时器
+  82   1        SystemPara_Init();//系统参数初始化
+  83   1        SerialInti();//串口初始化
+  84   1        delay_ms(15000);//延时约15秒,此处延时，是为了让模块有足够的时间注册到网络，
+  85   1        Ds1302Init();//ds1302初始化
+  86   1        LcdInit();//lcd1602初始化
+  87   1        LcdDisplay(display1,display2);//加载lcd字符串常量
+  88   1        delay_ms(100);//延时
+  89   1        while(1)
+  90   1        {
+  91   2          ds1302_proc();
+  92   2          dht11_proc();
+  93   2          key_Proc();
+  94   2          Alarm_proc();
+  95   2          VoiceWake_Proc();
+  96   2          lcd1602_Proc();   
+  97   2        }
+  98   1      }
+  99          
+ 100          /**
+ 101           * @brief  语音处理函数
+ 102           * @param  无
+ 103           * @retval 无
+ 104           */
+ 105          void VoiceWake_Proc(void)
+ 106          {
+ 107   1        if(LedRead==0)
+ 108   1        {
+ 109   2         led_control(ON);
+C51 COMPILER V9.60.0.0   MAIN                                                              03/12/2022 21:15:51 PAGE 3   
+
+ 110   2        }
+ 111   1        else
+ 112   1        {
+ 113   2         led_control(OFF);
+ 114   2        }
+ 115   1        
+ 116   1        if(MotorReadLeft==1)
+ 117   1        {
+ 118   2          Motor_forward();
+ 119   2        }
+ 120   1        else if(MotorReadRight==1)  
+ 121   1        {
+ 122   2         Motor_reverse();
+ 123   2        }
+ 124   1        else
+ 125   1        {
+ 126   2         Motor_stop();
+ 127   2        }
+ 128   1        
+ 129   1      }
+ 130          
+ 131          /**
+ 132           * @brief  闹钟，警报函数
+ 133           * @param  无
+ 134           * @retval 无
+ 135           */
+ 136          void Alarm_proc(void)
+ 137          {
+ 138   1        if((DS1302.alarm_hour==DS1302.hour)&&(DS1302.alarm_min==DS1302.min)&&(DS1302.alarm_sec==DS1302.sec))
+ 139   1        {
+ 140   2         beep_control(ON);
+ 141   2        }
+ 142   1        else
+ 143   1        {
+ 144   2         beep_control(OFF);
+ 145   2        }
+ 146   1        
+ 147   1         if(SmokeOUT==0)//当浓度高于设定值时 ，执行条件函数
+ 148   1         {
+ 149   2          delay_ms(20);//延时抗干扰
+ 150   2          if((SmokeOUT==0)&&(flag_send==0))//确定 浓度高于设定值时 ，执行条件函数
+ 151   2          {
+ 152   3            flag_send=1;
+ 153   3            beep_control(ON);
+ 154   3            Gsm_proc();   //蜂鸣器响，发送报警消息
+ 155   3          }
+ 156   2         }
+ 157   1         else
+ 158   1         {
+ 159   2          beep_control(OFF);
+ 160   2          flag_send=0;
+ 161   2         }
+ 162   1      }
+ 163          
+ 164          /**
+ 165           * @brief  dht11读取处理函数
+ 166           * @param  无
+ 167           * @retval 无
+ 168           */
+ 169          void dht11_proc(void)
+ 170          {
+ 171   1       DHT11_receive();
+C51 COMPILER V9.60.0.0   MAIN                                                              03/12/2022 21:15:51 PAGE 4   
+
+ 172   1      }
+ 173          
+ 174          
+ 175          /**
+ 176           * @brief  按键处理函数
+ 177           * @param  无
+ 178           * @retval 无
+ 179           */
+ 180          void key_Proc(void)
+ 181          {
+ 182   1        unsigned char key_temp;
+ 183   1          key_temp = KeyScan();
+ 184   1          switch (key_temp)
+ 185   1          {
+ 186   2            case 1:  
+ 187   2              if(SYSTEM.interface==MAIN)
+ 188   2              {
+ 189   3                SYSTEM.interface=SET;
+ 190   3                LCD_ClearLine(1);
+ 191   3              }
+ 192   2              else if(SYSTEM.interface==SET)
+ 193   2              {
+ 194   3                //保存设定值，返回主页面
+ 195   3                SYSTEM.interface=MAIN;
+ 196   3                LcdDisplay(display1,display2);
+ 197   3              }
+ 198   2            break;//设置键，再次按下确认返回键
+ 199   2              
+ 200   2            case 2: 
+ 201   2              if(SYSTEM.interface==SET)
+ 202   2              {
+ 203   3               (SYSTEM.choose==3)?(SYSTEM.choose=0):(SYSTEM.choose++);
+ 204   3              }
+ 205   2            break;//切换键
+ 206   2            
+ 207   2            case 3: 
+ 208   2              if(SYSTEM.choose==0)//小时
+ 209   2              {
+ 210   3               (DS1302.alarm_hour==23)?(DS1302.alarm_hour=0):(DS1302.alarm_hour++);
+ 211   3              }
+ 212   2              else if (SYSTEM.choose==1)//分钟
+ 213   2              {
+ 214   3               (DS1302.alarm_min==59)?(DS1302.alarm_min=0):(DS1302.alarm_min++);
+ 215   3              }
+ 216   2              else //秒钟
+ 217   2              {
+ 218   3               (DS1302.alarm_sec==59)?(DS1302.alarm_sec=0):(DS1302.alarm_sec++);
+ 219   3              }
+ 220   2            break;//时间加一键
+ 221   2            
+ 222   2            case 4: 
+ 223   2                if(SYSTEM.choose==0)//小时
+ 224   2              {
+ 225   3               (DS1302.alarm_hour==0)?(DS1302.alarm_hour=23):(DS1302.alarm_hour--);
+ 226   3              }
+ 227   2              else if (SYSTEM.choose==1)//分钟
+ 228   2              {
+ 229   3               (DS1302.alarm_min==0)?(DS1302.alarm_min=59):(DS1302.alarm_min--);
+ 230   3              }
+ 231   2              else //秒钟
+ 232   2              {
+ 233   3               (DS1302.alarm_sec==0)?(DS1302.alarm_sec=59):(DS1302.alarm_sec--);
+C51 COMPILER V9.60.0.0   MAIN                                                              03/12/2022 21:15:51 PAGE 5   
+
+ 234   3              } 
+ 235   2            break;//时间减一键
+ 236   2            
+ 237   2            default:break;
+ 238   2          }
+ 239   1      }
+ 240          
+ 241          /**
+ 242           * @brief  系统参数初始化函数
+ 243           * @param  无
+ 244           * @retval 无
+ 245           */
+ 246          void SystemPara_Init()
+ 247          {
+ 248   1        SYSTEM.interface=MAIN;
+ 249   1        SYSTEM.choose=0;
+ 250   1        DS1302.alarm_hour=8;
+ 251   1        DS1302.alarm_min=0;
+ 252   1        DS1302.alarm_sec=0;
+ 253   1      }
+ 254            
+ 255          
+ 256          /**
+ 257           * @brief  系统参数初始化函数
+ 258           * @param  无
+ 259           * @retval 无
+ 260           */
+ 261          void ds1302_proc(void)
+ 262          {
+ 263   1        ET0=0;
+ 264   1        Ds1302ReadTime(); 
+ 265   1        ET0=1;
+ 266   1        DS1302.sec  =(TIME[0]/16)*10+(TIME[0]&0x0f);
+ 267   1        DS1302.min  =(TIME[1]/16)*10+(TIME[1]&0x0f);
+ 268   1        DS1302.hour =(TIME[2]/16)*10+(TIME[2]&0x0f);
+ 269   1      }
+ 270          
+ 271          /**
+ 272           * @brief  lcd1602函数
+ 273           * @param  无
+ 274           * @retval 无
+ 275           */
+ 276          void lcd1602_Proc(void)
+ 277          {
+ 278   1        if(SYSTEM.interface==MAIN)
+ 279   1        {
+ 280   2          LCD_WriteDisplay(0, 7,'0'+DS1302.hour/10);
+ 281   2          LCD_WriteDisplay(0, 8,'0'+DS1302.hour%10);
+ 282   2          
+ 283   2          LCD_WriteDisplay(0, 10,'0'+DS1302.min/10);
+ 284   2          LCD_WriteDisplay(0, 11,'0'+DS1302.min%10);
+ 285   2          
+ 286   2          LCD_WriteDisplay(0, 13,'0'+DS1302.sec/10);
+ 287   2          LCD_WriteDisplay(0, 14,'0'+DS1302.sec%10);   
+ 288   2        }
+ 289   1        else
+ 290   1        {
+ 291   2          LCD_WriteDisplay(0, 7,'0'+DS1302.alarm_hour/10);
+ 292   2          LCD_WriteDisplay(0, 8,'0'+DS1302.alarm_hour%10);
+ 293   2          
+ 294   2          LCD_WriteDisplay(0, 10,'0'+DS1302.alarm_min/10);
+ 295   2          LCD_WriteDisplay(0, 11,'0'+DS1302.alarm_min%10);
+C51 COMPILER V9.60.0.0   MAIN                                                              03/12/2022 21:15:51 PAGE 6   
+
+ 296   2          
+ 297   2          LCD_WriteDisplay(0, 13,'0'+DS1302.alarm_sec/10);
+ 298   2          LCD_WriteDisplay(0, 14,'0'+DS1302.alarm_sec%10);  
+ 299   2        }
+ 300   1      
+ 301   1      }
+ 302          /*****************************************************END OF FILE*****************************************
+             -****************/ 
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    601    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      9    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

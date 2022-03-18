@@ -1,0 +1,12 @@
+".\Objects\main.obj",
+".\Objects\ds1302.obj",
+".\Objects\lcd.obj",
+".\Objects\pwm.obj",
+".\Objects\Delay.obj",
+".\Objects\dht11.obj",
+".\Objects\ledbeep.obj",
+".\Objects\key.obj",
+".\Objects\usart.obj",
+".\Objects\bsp_xx.obj" 
+TO ".\Objects\template" 
+PRINT(".\Listings\template.m51") RAMSIZE(256) 

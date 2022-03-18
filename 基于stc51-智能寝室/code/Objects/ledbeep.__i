@@ -1,0 +1,1 @@
+"users\ledbeep.c" OPTIMIZE (8,SPEED) BROWSE INCDIR(.\users) DEBUG OBJECTEXTEND PRINT(.\Listings\ledbeep.lst) TABS (2) OBJECT(.\Objects\ledbeep.obj)

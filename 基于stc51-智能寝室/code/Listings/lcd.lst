@@ -1,0 +1,266 @@
+C51 COMPILER V9.60.0.0   LCD                                                               03/12/2022 21:06:27 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE LCD
+OBJECT MODULE PLACED IN .\Objects\lcd.obj
+COMPILER INVOKED BY: D:\keil 5\anzhuangdizhi\C51\BIN\C51.EXE users\lcd.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\users) DEBUG 
+                    -OBJECTEXTEND PRINT(.\Listings\lcd.lst) TABS(2) OBJECT(.\Objects\lcd.obj)
+
+line level    source
+
+   1          /**
+   2            ********************************************************************************************************
+             -*****************
+   3            * @file    lcd.c
+   4            * @author  
+   5            * @version V1.0
+   6            * @date    2020-03-19
+   7            * @brief   STC89C51 lcd.c文件
+   8            ********************************************************************************************************
+             -*****************
+   9            * @attention
+  10            *
+  11            * 此lcd.c文件适用于LCD1602模块
+  12            * 其中LCD部分写操作函数来自正点原子
+  13            *
+  14            ********************************************************************************************************
+             -*****************
+  15            */
+  16          
+  17          /* Includes ----------------------------------------------------------------------------------------------
+             ----------------*/
+  18          #include "lcd.h"
+  19          
+  20          /* 定义 --------------------------------------------------------------------------------------------------
+             ----------------*/
+  21          unsigned char display1[16] = " Time:   :  :   "; /* LCD1602第一行显示的内容 */
+  22          unsigned char display2[16] = "Temp:   Hemi:  %"; /* LCD1602第二行显示的内容 */
+  23          
+  24          /**
+  25           * @brief  延时函数，延时1ms
+  26           * @param  c
+  27           * @retval 无
+  28           */
+  29          void Lcd1602_Delay1ms(unsigned int c)   //误差 0us
+  30          {
+  31   1        unsigned char a,b;
+  32   1        for (; c > 0; c--)
+  33   1        {
+  34   2          for (b = 199; b > 0; b--)
+  35   2          {
+  36   3            for(a = 1; a > 0; a--);
+  37   3          }      
+  38   2        }     
+  39   1      }
+  40          
+  41          #ifndef   LCD1602_4PINS  //当没有定义这个LCD1602_4PINS时
+  42          
+  43          /**
+  44           * @brief  向LCD写入一个字节的命令
+  45           * @param  com
+  46           * @retval 无
+  47           */
+  48          void LcdWriteCom(unsigned char com)   //写入命令
+  49          {
+C51 COMPILER V9.60.0.0   LCD                                                               03/12/2022 21:06:27 PAGE 2   
+
+  50   1        LCD1602_E = 0;     //使能
+  51   1        LCD1602_RS = 0;    //选择发送命令
+  52   1        LCD1602_RW = 0;    //选择写入
+  53   1        
+  54   1        LCD1602_DATAPINS = com;     //放入命令
+  55   1        Lcd1602_Delay1ms(1);    //等待数据稳定
+  56   1      
+  57   1        LCD1602_E = 1;            //写入时序
+  58   1        Lcd1602_Delay1ms(5);    //保持时间
+  59   1        LCD1602_E = 0;
+  60   1      }
+  61          
+  62          #else 
+              void LcdWriteCom(unsigned char com)   //写入命令
+              {
+                LCD1602_E = 0;   //使能清零
+                LCD1602_RS = 0;  //选择写入命令
+                LCD1602_RW = 0;  //选择写入
+              
+                LCD1602_DATAPINS = com; //由于4位的接线是接到P0口的高四位，所以传送高四位不用改
+                Lcd1602_Delay1ms(1);
+              
+                LCD1602_E = 1;   //写入时序
+                Lcd1602_Delay1ms(5);
+                LCD1602_E = 0;
+              
+                LCD1602_DATAPINS = com << 4; //发送低四位
+                Lcd1602_Delay1ms(1);
+              
+                LCD1602_E = 1;   //写入时序
+                Lcd1602_Delay1ms(5);
+                LCD1602_E = 0;
+              }
+              #endif
+  84               
+  85          #ifndef   LCD1602_4PINS     
+  86          /**
+  87           * @brief  向LCD写入一个字节的数据
+  88           * @param  dat
+  89           * @retval 无
+  90           */
+  91          void LcdWriteData(unsigned char dat)      //写入数据
+  92          {
+  93   1        LCD1602_E = 0;  //使能清零
+  94   1        LCD1602_RS = 1; //选择输入数据
+  95   1        LCD1602_RW = 0; //选择写入
+  96   1      
+  97   1        LCD1602_DATAPINS = dat; //写入数据
+  98   1        Lcd1602_Delay1ms(1);
+  99   1      
+ 100   1        LCD1602_E = 1;   //写入时序
+ 101   1        Lcd1602_Delay1ms(5);   //保持时间
+ 102   1        LCD1602_E = 0;
+ 103   1      }
+ 104          
+ 105          #else
+              void LcdWriteData(unsigned char dat)      //写入数据
+              {
+                LCD1602_E = 0;    //使能清零
+                LCD1602_RS = 1;   //选择写入数据
+                LCD1602_RW = 0;   //选择写入
+              
+C51 COMPILER V9.60.0.0   LCD                                                               03/12/2022 21:06:27 PAGE 3   
+
+                LCD1602_DATAPINS = dat; //由于4位的接线是接到P0口的高四位，所以传送高四位不用改
+                Lcd1602_Delay1ms(1);
+              
+                LCD1602_E = 1;    //写入时序
+                Lcd1602_Delay1ms(5);
+                LCD1602_E = 0;
+              
+                LCD1602_DATAPINS = dat << 4; //写入低四位
+                Lcd1602_Delay1ms(1);
+              
+                LCD1602_E = 1;    //写入时序
+                Lcd1602_Delay1ms(5);
+                LCD1602_E = 0;
+              }
+              #endif
+ 127          
+ 128          #ifndef   LCD1602_4PINS
+ 129          /**
+ 130           * @brief  初始化LCD屏
+ 131           * @param  无
+ 132           * @retval 无
+ 133           */
+ 134          void LcdInit(void)              //LCD初始化子程序
+ 135          {
+ 136   1        LcdWriteCom(0x38);  //开显示
+ 137   1        LcdWriteCom(0x0c);  //开显示不显示光标
+ 138   1        LcdWriteCom(0x06);  //写一个指针加1
+ 139   1        LcdWriteCom(0x01);  //清屏
+ 140   1        LcdWriteCom(0x80);  //设置数据指针起点
+ 141   1        
+ 142   1        //LcdDisplay(display1, display2); 
+ 143   1      }
+ 144          
+ 145          #else
+              void LcdInit(void)              //LCD初始化子程序
+              {
+                LcdWriteCom(0x32);   //将8位总线转为4位总线
+                LcdWriteCom(0x28);   //在四位线下的初始化
+                LcdWriteCom(0x0c);  //开显示不显示光标
+                LcdWriteCom(0x06);  //写一个指针加1
+                LcdWriteCom(0x01);  //清屏
+                LcdWriteCom(0x80);  //设置数据指针起点
+                
+                LcdDisplay(display1, display2); 
+              }
+              #endif
+ 158          
+ 159          /**
+ 160           * @brief  LCD1602显示函数
+ 161           * @param  两段字符串disp1[16],disp2[16]
+ 162           * @retval 无
+ 163           */
+ 164          void LcdDisplay(unsigned char disp1[16], unsigned char disp2[16])
+ 165          {
+ 166   1        unsigned char i;
+ 167   1        LcdWriteCom(0x80); //第一行
+ 168   1        for (i = 0; i < 16; i++)  
+ 169   1        {
+ 170   2          LcdWriteData(disp1[i]); 
+ 171   2        }
+ 172   1        LcdWriteCom(0x80 + 0x40); //第二行
+ 173   1        for (i = 0; i < 16; i++)  
+C51 COMPILER V9.60.0.0   LCD                                                               03/12/2022 21:06:27 PAGE 4   
+
+ 174   1        {
+ 175   2          LcdWriteData(disp2[i]); 
+ 176   2        } 
+ 177   1      } 
+ 178          
+ 179          /**
+ 180           * @brief  LCD1602显示函数
+ 181           * @param  x轴 y轴 内容
+ 182           * @retval 无
+ 183           */
+ 184          void LCD_WriteDisplay(unsigned char x, unsigned char y, unsigned char dat)
+ 185          {
+ 186   1        if (x == 0) //第一行
+ 187   1        {
+ 188   2          LcdWriteCom(0x80 + y);  
+ 189   2        }
+ 190   1        else if (x== 1)
+ 191   1        {
+ 192   2          LcdWriteCom(0x80 + 0x40 + y); //第二行
+ 193   2        }
+ 194   1        
+ 195   1        LcdWriteData(dat);  
+ 196   1      }
+ 197          
+ 198          void LCD_ClearLine(unsigned char line)
+ 199          {
+ 200   1        if (line == 0)
+ 201   1        {
+ 202   2          LcdWriteCom(0x80);
+ 203   2        }
+ 204   1        else if (line == 1)
+ 205   1        {
+ 206   2          LcdWriteCom(0x80 + 0x40);
+ 207   2        }
+ 208   1        
+ 209   1        LcdWriteData(' ');
+ 210   1        LcdWriteData(' ');  
+ 211   1        LcdWriteData(' ');  
+ 212   1        LcdWriteData(' ');  
+ 213   1        LcdWriteData(' ');  
+ 214   1        LcdWriteData(' ');  
+ 215   1        LcdWriteData(' ');  
+ 216   1        LcdWriteData(' ');  
+ 217   1        LcdWriteData(' ');
+ 218   1        LcdWriteData(' ');  
+ 219   1        LcdWriteData(' ');  
+ 220   1        LcdWriteData(' ');  
+ 221   1        LcdWriteData(' ');  
+ 222   1        LcdWriteData(' ');  
+ 223   1        LcdWriteData(' ');  
+ 224   1        LcdWriteData(' ');  
+ 225   1          
+ 226   1      }
+ 227          
+ 228          /*****************************************************END OF FILE*****************************************
+             -****************/ 
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    292    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+C51 COMPILER V9.60.0.0   LCD                                                               03/12/2022 21:06:27 PAGE 5   
+
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     32       7
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

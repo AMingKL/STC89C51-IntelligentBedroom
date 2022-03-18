@@ -1,0 +1,27 @@
+C51 COMPILER V9.60.0.0   SMOKECHECK                                                        03/12/2022 14:35:01 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SMOKECHECK
+OBJECT MODULE PLACED IN .\Objects\smokecheck.obj
+COMPILER INVOKED BY: D:\keil 5\anzhuangdizhi\C51\BIN\C51.EXE users\smokecheck.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\users)
+                    - DEBUG OBJECTEXTEND PRINT(.\Listings\smokecheck.lst) TABS(2) OBJECT(.\Objects\smokecheck.obj)
+
+line level    source
+
+   1          #include "smokecheck.h"
+   2          
+   3          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   ----    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,1 @@
+"users\bsp_xx.c" OPTIMIZE (8,SPEED) BROWSE INCDIR(.\users) DEBUG OBJECTEXTEND PRINT(.\Listings\bsp_xx.lst) TABS (2) OBJECT(.\Objects\bsp_xx.obj)

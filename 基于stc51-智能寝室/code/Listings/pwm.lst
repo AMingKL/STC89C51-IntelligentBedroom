@@ -1,0 +1,79 @@
+C51 COMPILER V9.60.0.0   PWM                                                               03/12/2022 20:36:28 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE PWM
+OBJECT MODULE PLACED IN .\Objects\pwm.obj
+COMPILER INVOKED BY: D:\keil 5\anzhuangdizhi\C51\BIN\C51.EXE users\pwm.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\users) DEBUG 
+                    -OBJECTEXTEND PRINT(.\Listings\pwm.lst) TABS(2) OBJECT(.\Objects\pwm.obj)
+
+line level    source
+
+   1          #include "pwm.h"
+   2          
+   3          #define uchar unsigned char
+   4          #define uint unsigned int
+   5          
+   6          uint cnt_PWM = 0;  //PWM频率计数 
+   7          unsigned char VTH0 ,VTL0; //T0定时初值
+   8          
+   9          void Motor_forward(void)
+  10          {
+  11   1        IN1 = 0;
+  12   1        IN2 = 1;
+  13   1        ENA=1;
+  14   1      }
+  15          
+  16          void Motor_reverse(void)
+  17          {
+  18   1        IN1 = 1;
+  19   1        IN2 = 0;
+  20   1        ENA=1;
+  21   1      }
+  22          
+  23          void Motor_stop(void)
+  24          {
+  25   1        IN1 = 0;
+  26   1        IN2 = 0;
+  27   1        ENA=0;
+  28   1      }
+  29          
+  30          
+  31          
+  32          void T0Init(unsigned char vT0)
+  33          { 
+  34   1        TMOD=(TMOD&0xf0)|0x01;  //T0工作在方式1
+  35   1        VTH0=(65536-vT0*Fosc/120000)/256;
+  36   1        VTL0=(65536-vT0*Fosc/120000)%256;
+  37   1        TH0=VTH0;   //写入初值高8位
+  38   1        TL0=VTL0;   //写入初值低8位  
+  39   1        EA=1;      //总中断允许
+  40   1        ET0=1;     //T0中断允许
+  41   1        TR0=1;     //启动定时器T0
+  42   1      }
+  43          
+  44          void T0Int(void) interrupt 1
+  45          {   
+  46   1        TH0=VTH0;
+  47   1        TL0=VTL0;
+  48   1        cnt_PWM ++;
+  49   1        if(cnt_PWM >= 100)
+  50   1        {
+  51   2          cnt_PWM = 0;
+  52   2        }
+  53   1      }
+
+C51 COMPILER V9.60.0.0   PWM                                                               03/12/2022 20:36:28 PAGE 2   
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    186    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
